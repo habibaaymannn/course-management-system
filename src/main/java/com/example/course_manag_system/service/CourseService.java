@@ -1,19 +1,19 @@
-package com.coursemanagement.service;
+package com.example.course_manag_system.service;
 
-import com.coursemanagement.dto.request.CourseRequestDto;
-import com.coursemanagement.dto.response.CourseResponseDto;
+
+import com.example.course_manag_system.dto.request.CourseRequestDto;
+import com.example.course_manag_system.dto.response.CourseResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.UUID;
+
 public interface CourseService {
     CourseResponseDto createCourse(CourseRequestDto dto);
-    CourseResponseDto getCourseById(Long id);
+    CourseResponseDto getCourseById(UUID id);
     Page<CourseResponseDto> getAllCourses(Pageable pageable);
-    Page<CourseResponseDto> searchCoursesByTitle(String keyword, Pageable pageable);
-    CourseResponseDto updateCourse(Long id, CourseRequestDto dto);
-
+    CourseResponseDto updateCourse(UUID id, CourseRequestDto dto);
     // Soft delete: marks the course as deleted rather than removing the row.
-    void deleteCourse(Long id);
-
-    CourseResponseDto assignInstructor(Long courseId, Long instructorId);
+    void deleteCourse(UUID id);
+    CourseResponseDto assignInstructor(UUID courseId, UUID instructorId);
 }

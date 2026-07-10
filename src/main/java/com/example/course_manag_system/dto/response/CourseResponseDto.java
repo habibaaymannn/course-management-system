@@ -1,6 +1,8 @@
-package com.coursemanagement.dto.response;
+package com.example.course_manag_system.dto.response;
 
 import lombok.*;
+
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -8,11 +10,11 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class CourseResponseDto {
-    private Long id;
+    private UUID id;
     private String title;
     private String description;
     private Integer credits;
-    private Long instructorId;
+    private UUID instructorId;
     private String instructorName;
     private int enrolledStudentCount;
 }

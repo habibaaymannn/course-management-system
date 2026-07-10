@@ -1,11 +1,9 @@
-package com.coursemanagement.repository;
+package com.example.course_manag_system.repository;
 
-import com.coursemanagement.entity.Instructor;
+import com.example.course_manag_system.entity.Instructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
+import java.util.UUID;
 
-public interface InstructorRepository extends JpaRepository<Instructor, Long> {
-    Optional<Instructor> findByEmail(String email);
-    boolean existsByEmail(String email);
+public interface InstructorRepository extends JpaRepository<Instructor, UUID> {
 }
