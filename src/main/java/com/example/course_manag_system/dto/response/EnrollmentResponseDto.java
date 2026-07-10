@@ -4,6 +4,7 @@ import com.example.course_manag_system.entity.EnrollmentStatus;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -11,10 +12,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class EnrollmentResponseDto {
-    private Long id;
-    private Long studentId;
+    private UUID id;
+    private UUID studentId;
     private String studentName;
-    private Long courseId;
+    private UUID courseId;
     private String courseTitle;
     private LocalDate enrollmentDate;
     private EnrollmentStatus status;

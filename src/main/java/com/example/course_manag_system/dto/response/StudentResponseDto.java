@@ -3,6 +3,7 @@ package com.example.course_manag_system.dto.response;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -10,7 +11,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class StudentResponseDto {
-    private Long id;
+    private UUID id;
     private String firstName;
     private String lastName;
     private String email;
