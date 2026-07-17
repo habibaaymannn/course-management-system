@@ -15,7 +15,7 @@ public class CourseResponseDto {
     private String title;
     private String description;
     private Integer credits;
-    private Long instructorId;
+    private UUID instructorId;
     private String instructorName;
     private LocalDateTime registrationStartTime;
     private LocalDateTime registrationEndTime;

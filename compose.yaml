@@ -1,5 +1,5 @@
 services:
-  postgres:
+  db:
     image: 'postgres:latest'
     environment:
       - POSTGRES_DB=${DB_NAME}
@@ -7,3 +7,55 @@ services:
       - POSTGRES_USER=${DB_USERNAME}
     ports:
       - '5432:5432'
+    volumes:
+      - cms_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d course_system" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: cms-admin
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: course_system
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q -O- http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"' || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  public:
+    build:
+      context: ./public
+      dockerfile: Dockerfile
+    container_name: cms-public
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: course_system
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+    ports:
+      - "8082:8082"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  cms_db_data:
