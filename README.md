@@ -1,189 +1,238 @@
 # Course Management System
 
-A RESTful backend application built with Spring Boot for managing
-students, instructors, courses, and enrollments.
+A Spring Boot course management backend split into two services:
 
-The project follows a layered architecture and demonstrates Spring Data
-JPA, PostgreSQL, DTOs, MapStruct, validation, pagination, search, soft
-deletion, and centralized exception handling.
+- `admin`: administrator-facing APIs for managing courses, instructors, and reports.
+- `public`: student-facing APIs for browsing courses, registering students, and managing enrollments.
+
+Both services use the same PostgreSQL database schema and follow a layered architecture with controllers, DTOs, entities, repositories, services, mappers, and centralized exception handling.
 
 ## Features
 
--   Manage students, instructors, courses, and enrollments
--   CRUD operations
--   Assign instructors to courses
--   Enroll students in courses
--   Search courses by title
--   Pagination support
--   Soft deletion for courses
--   Request validation
--   Centralized exception handling
--   DTO-based API responses
--   MapStruct entity/DTO mapping
--   UUID-based identifiers
--   PostgreSQL persistence
+- Admin course management with create, read, update, instructor assignment, and soft delete
+- Admin instructor management with duplicate email validation
+- Admin reporting for course, instructor, student, and enrollment totals
+- Public course browsing for active, non-deleted courses
+- Public student registration with duplicate email validation
+- Public enrollment with duplicate enrollment prevention
+- Registration-window validation before students can enroll in a course
+- Enrollment cancellation by setting status to `CANCELLED`
+- Pagination support for list endpoints
+- DTO-based API responses
+- MapStruct entity/DTO mapping
+- UUID-based identifiers
+- PostgreSQL persistence
+- Docker Compose setup for database and both services
+- Mockito unit tests for service-layer business logic
 
 ## Tech Stack
 
--   Java 21
--   Spring Boot
--   Spring Web
--   Spring Data JPA
--   PostgreSQL
--   Maven
--   Lombok
--   MapStruct
--   Jakarta Validation
--   JUnit and Mockito
+- Java 21
+- Spring Boot 4.1.0
+- Spring Web
+- Spring Data JPA
+- Spring Boot Validation
+- Spring Boot Actuator
+- PostgreSQL
+- Maven
+- Lombok
+- MapStruct
+- JUnit 5
+- Mockito
+- Docker Compose
 
 ## Project Structure
 
-``` text
-src/main/java/com/example/course_manag_system/
-├── controller/
-├── dto/
-│   ├── request/
-│   └── response/
-├── entity/
-├── exception/
-├── mapper/
-├── repository/
-├── service/
-│   └── serviceImpl/
-└── CourseManagSystemApplication.java
+```text
+course_manag_system/
+|-- admin/
+|   |-- src/main/java/com/example/admin/
+|   |   |-- controller/
+|   |   |-- dto/
+|   |   |-- entity/
+|   |   |-- exception/
+|   |   |-- mapper/
+|   |   |-- repository/
+|   |   |-- service/
+|   |   `-- serviceImpl/
+|   `-- src/test/java/com/example/admin/
+|-- public/
+|   |-- src/main/java/com/example/publicapi/
+|   |   |-- controller/
+|   |   |-- dto/
+|   |   |-- entity/
+|   |   |-- exception/
+|   |   |-- mapper/
+|   |   |-- repository/
+|   |   |-- service/
+|   |   `-- serviceImpl/
+|   `-- src/test/java/com/example/publicapi/
+|-- compose.yaml
+`-- README.md
+```
+
+## Services
+
+### Admin Service
+
+Default local port: `8081`
+
+Base admin endpoints:
+
+```text
+POST   /api/v1/admin/courses
+GET    /api/v1/admin/courses
+GET    /api/v1/admin/courses/{id}
+PUT    /api/v1/admin/courses/{id}
+PATCH  /api/v1/admin/courses/{courseId}/instructor/{instructorId}
+DELETE /api/v1/admin/courses/{id}
+
+POST   /api/v1/admin/instructors
+GET    /api/v1/admin/instructors
+GET    /api/v1/admin/instructors/{id}
+PUT    /api/v1/admin/instructors/{id}
+DELETE /api/v1/admin/instructors/{id}
+
+GET    /api/v1/admin/reports/summary
+```
+
+### Public Service
+
+Default local port: `8082`
+
+Base public endpoints:
+
+```text
+GET    /api/v1/public/courses
+GET    /api/v1/public/courses/{id}
+
+POST   /api/v1/public/students
+GET    /api/v1/public/students/{id}
+
+POST   /api/v1/public/enrollments
+GET    /api/v1/public/enrollments/student/{studentId}
+DELETE /api/v1/public/enrollments/{id}
 ```
 
 ## Prerequisites
 
--   Java 21
--   Maven
--   PostgreSQL
--   Git
+- Java 21
+- Maven or the included Maven wrappers
+- PostgreSQL, or Docker for the included Compose setup
+- Git
 
-## Database Setup
+## Environment Variables
 
-Create a PostgreSQL database:
+Create a `.env` file at the repository root for Docker Compose, and in each service directory if running services directly from Maven.
 
-``` sql
-CREATE DATABASE course_system;
-```
-
-Set these environment variables:
-
-``` text
+```text
 DB_HOST=localhost
 DB_NAME=course_system
 DB_USERNAME=postgres
 DB_PASSWORD=your_password
 ```
 
-Do not commit your `.env` file or database credentials to GitHub.
+The service configuration reads:
 
-## Application Configuration
-
-``` yaml
+```yaml
 spring:
-  application:
-    name: course-management-system
-
   datasource:
-    driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${DB_HOST}:5432/${DB_NAME}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
 ```
 
-## Running the Project
+Do not commit `.env` files or database credentials.
 
-Clone the repository:
+## Running With Docker Compose
 
-``` bash
-git clone https://github.com/habibaaymannn/course-management-system.git
-cd course_manag_system
+From the repository root:
+
+```bash
+docker compose up --build
 ```
 
-Build the project:
+Expected service URLs:
 
-``` bash
-mvn clean package
+```text
+Admin API:  http://localhost:8081
+Public API: http://localhost:8082
+Database:   localhost:5432
 ```
 
-Run the application:
+## Running Locally With Maven
 
-``` bash
-mvn spring-boot:run
+Start PostgreSQL and set the environment variables first.
+
+Run the admin service:
+
+```bash
+cd admin
+./mvnw spring-boot:run
 ```
 
-The API runs at:
+Run the public service:
 
-``` text
-http://localhost:8080
+```bash
+cd public
+./mvnw spring-boot:run
 ```
 
-## Main Domain Models
+On Windows PowerShell, use:
 
--   **Student** --- A student who can enroll in courses.
--   **Instructor** --- An instructor who can be assigned to courses.
--   **Course** --- A course with a title, description, credits, and
-    optional instructor.
--   **Enrollment** --- The relationship between a student and a course.
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+## Testing
+
+Run the service-layer unit tests for the admin module:
+
+```powershell
+cd admin
+.\mvnw.cmd -Dtest="com.example.admin.serviceImplTest.*Test" test
+```
+
+Run the service-layer unit tests for the public module:
+
+```powershell
+cd public
+.\mvnw.cmd -Dtest="com.example.publicapi.serviceImplTest.*Test" test
+```
+
+Current service unit test coverage:
+
+```text
+Admin service tests:  18 passing
+Public service tests: 18 passing
+Total:                36 passing
+```
+
+Note: full `mvn test` runs also execute the generated Spring context tests. Those tests require a reachable PostgreSQL database with valid credentials.
 
 ## Architecture
 
--   **Controller Layer** --- Handles HTTP requests and responses
--   **Service Layer** --- Contains business logic
--   **Repository Layer** --- Handles database access with Spring Data
-    JPA
--   **DTO Layer** --- Separates API data from persistence entities
--   **Mapper Layer** --- Converts entities and DTOs with MapStruct
--   **Exception Layer** --- Provides centralized error handling
+- Controller layer: handles HTTP requests and responses
+- Service layer: contains business rules and transaction boundaries
+- Repository layer: handles persistence with Spring Data JPA
+- DTO layer: separates API payloads from persistence entities
+- Mapper layer: converts between entities and DTOs with MapStruct
+- Exception layer: centralizes API error responses
 
-## Testing the API
+## Main Domain Models
 
-The API can be tested using Postman. Typical operations include creating
-and retrieving students and instructors, creating and searching courses,
-assigning instructors, enrolling students, updating records,
-soft-deleting courses, and testing pagination and validation.
-
-## Build Verification
-
-``` bash
-mvn clean compile
-```
-
-To create the executable JAR:
-
-``` bash
-mvn clean package
-```
-
-## Security Note
-
-Add these entries to `.gitignore`:
-
-``` gitignore
-.env
-target/
-.idea/
-*.iml
-```
-
-If credentials are accidentally pushed to a public repository, change
-them immediately.
+- `Student`: a public user who can enroll in courses
+- `Instructor`: a teacher assigned to courses by admins
+- `Course`: a course with credits, instructor assignment, soft-delete state, and a registration window
+- `Enrollment`: the relationship between a student and a course, with an enrollment status
 
 ## Future Improvements
 
--   Authentication and authorization with Spring Security
--   Swagger/OpenAPI documentation
--   Docker support
--   Automated integration tests
--   CI/CD with GitHub Actions
--   Cloud deployment
+- Authentication and authorization with Spring Security
+- Swagger/OpenAPI documentation
+- Integration tests with Testcontainers
+- CI/CD with GitHub Actions
+- Production-ready secrets management
 
 ## Author
 
