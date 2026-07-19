@@ -1,5 +1,6 @@
 package com.example.admin.entity;
 
+import com.example.admin.enums.EnrollmentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,4 +1,4 @@
-package com.example.admin.entity;
+package com.example.admin.enums;
 
 public enum EnrollmentStatus {
     ACTIVE,

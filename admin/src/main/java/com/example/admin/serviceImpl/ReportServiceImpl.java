@@ -1,7 +1,7 @@
 package com.example.admin.serviceImpl;
 
 import com.example.admin.dto.response.SystemReportDto;
-import com.example.admin.entity.EnrollmentStatus;
+import com.example.admin.enums.EnrollmentStatus;
 import com.example.admin.repository.CourseRepository;
 import com.example.admin.repository.EnrollmentRepository;
 import com.example.admin.repository.InstructorRepository;
