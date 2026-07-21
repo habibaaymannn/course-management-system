@@ -1,4 +1,4 @@
-package com.example.publicapi.exception;
+package com.example.core.exception;
 
 import lombok.Getter;
 import lombok.Setter;

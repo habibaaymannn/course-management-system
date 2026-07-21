@@ -1,6 +1,6 @@
 package com.example.admin.repository;
 
-import com.example.admin.entity.Student;
+import com.example.core.entity.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

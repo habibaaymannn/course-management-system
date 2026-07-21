@@ -1,7 +1,7 @@
 package com.example.publicapi.mapper;
 
 import com.example.publicapi.dto.response.CourseResponseDto;
-import com.example.publicapi.entity.Course;
+import com.example.core.entity.Course;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

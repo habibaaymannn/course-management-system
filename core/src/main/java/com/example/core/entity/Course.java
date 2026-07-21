@@ -1,4 +1,4 @@
-package com.example.publicapi.entity;
+package com.example.core.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -9,9 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-// Mirrors the "courses" table, owned/created by the admin service (this
-// service only reads courses and validates the registration window - it
-// never creates, updates, or deletes a course).
 @Entity
 @Table(name = "courses")
 @Getter
@@ -38,6 +35,9 @@ public class Course {
     @JoinColumn(name = "instructor_id")
     private Instructor instructor;
 
+    // Registration window - students may only enroll (via the public service)
+    // while now() falls between these two timestamps. Set/managed here in
+    // the admin service.
     private LocalDateTime registrationStartTime;
     private LocalDateTime registrationEndTime;
 
@@ -46,6 +46,8 @@ public class Course {
     @JsonIgnore
     private List<Enrollment> enrollments = new ArrayList<>();
 
+    // Soft delete flag - courses are never physically removed via the API,
+    // they are marked deleted=true instead.
     @Builder.Default
     @Column(nullable = false)
     private boolean deleted = false;

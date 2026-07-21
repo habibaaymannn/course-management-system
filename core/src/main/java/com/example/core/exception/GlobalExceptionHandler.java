@@ -1,4 +1,4 @@
-package com.example.admin.exception;
+package com.example.core.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

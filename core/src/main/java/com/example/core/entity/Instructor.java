@@ -1,22 +1,21 @@
-package com.example.publicapi.entity;
+package com.example.core.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "students")
+@Table(name = "instructors")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Student {
+public class Instructor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,8 +30,10 @@ public class Student {
     @Column(nullable = false, unique = true)
     private String email;
 
+    private String department;
+
     @Builder.Default
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<Enrollment> enrollments = new ArrayList<>();
+    private List<Course> courses = new ArrayList<>();
 }

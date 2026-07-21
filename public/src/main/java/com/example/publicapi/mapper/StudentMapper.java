@@ -2,7 +2,7 @@ package com.example.publicapi.mapper;
 
 import com.example.publicapi.dto.request.StudentRequestDto;
 import com.example.publicapi.dto.response.StudentResponseDto;
-import com.example.publicapi.entity.Student;
+import com.example.core.entity.Student;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")

@@ -1,4 +1,4 @@
-package com.example.publicapi.entity;
+package com.example.core.enums;
 
 public enum EnrollmentStatus {
     ACTIVE,

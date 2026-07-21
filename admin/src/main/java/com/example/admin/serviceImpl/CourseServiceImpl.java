@@ -3,9 +3,9 @@ package com.example.admin.serviceImpl;
 
 import com.example.admin.dto.request.CourseRequestDto;
 import com.example.admin.dto.response.CourseResponseDto;
-import com.example.admin.entity.Course;
-import com.example.admin.entity.Instructor;
-import com.example.admin.exception.FunctionalException;
+import com.example.core.entity.Course;
+import com.example.core.entity.Instructor;
+import com.example.core.exception.FunctionalException;
 import com.example.admin.mapper.CourseMapper;
 import com.example.admin.repository.CourseRepository;
 import com.example.admin.repository.InstructorRepository;

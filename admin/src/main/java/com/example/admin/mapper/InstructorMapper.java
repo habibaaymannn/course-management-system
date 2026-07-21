@@ -3,11 +3,8 @@ package com.example.admin.mapper;
 
 import com.example.admin.dto.request.InstructorRequestDto;
 import com.example.admin.dto.response.InstructorResponseDto;
-import com.example.admin.entity.Course;
-import com.example.admin.entity.Instructor;
+import com.example.core.entity.Instructor;
 import org.mapstruct.*;
-
-import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface InstructorMapper {

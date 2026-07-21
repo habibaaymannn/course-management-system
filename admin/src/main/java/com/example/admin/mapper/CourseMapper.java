@@ -3,7 +3,7 @@ package com.example.admin.mapper;
 
 import com.example.admin.dto.request.CourseRequestDto;
 import com.example.admin.dto.response.CourseResponseDto;
-import com.example.admin.entity.Course;
+import com.example.core.entity.Course;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")

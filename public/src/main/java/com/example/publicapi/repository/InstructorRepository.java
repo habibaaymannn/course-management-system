@@ -1,6 +1,6 @@
 package com.example.publicapi.repository;
 
-import com.example.publicapi.entity.Instructor;
+import com.example.core.entity.Instructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

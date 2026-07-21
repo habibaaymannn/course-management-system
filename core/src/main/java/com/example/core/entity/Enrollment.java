@@ -1,10 +1,12 @@
-package com.example.publicapi.entity;
+package com.example.core.entity;
 
+import com.example.core.enums.EnrollmentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.util.UUID;
+
 
 @Entity
 @Table(name = "enrollments",

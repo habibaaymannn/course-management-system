@@ -2,8 +2,8 @@ package com.example.admin.serviceImpl;
 
 import com.example.admin.dto.request.InstructorRequestDto;
 import com.example.admin.dto.response.InstructorResponseDto;
-import com.example.admin.entity.Instructor;
-import com.example.admin.exception.FunctionalException;
+import com.example.core.entity.Instructor;
+import com.example.core.exception.FunctionalException;
 import com.example.admin.mapper.InstructorMapper;
 import com.example.admin.repository.InstructorRepository;
 import com.example.admin.service.InstructorService;

@@ -2,11 +2,11 @@ package com.example.publicapi.serviceImpl;
 
 import com.example.publicapi.dto.request.EnrollmentRequestDto;
 import com.example.publicapi.dto.response.EnrollmentResponseDto;
-import com.example.publicapi.entity.Course;
-import com.example.publicapi.entity.Enrollment;
-import com.example.publicapi.entity.EnrollmentStatus;
-import com.example.publicapi.entity.Student;
-import com.example.publicapi.exception.FunctionalException;
+import com.example.core.entity.Course;
+import com.example.core.entity.Enrollment;
+import com.example.core.enums.EnrollmentStatus;
+import com.example.core.entity.Student;
+import com.example.core.exception.FunctionalException;
 import com.example.publicapi.mapper.EnrollmentMapper;
 import com.example.publicapi.repository.CourseRepository;
 import com.example.publicapi.repository.EnrollmentRepository;

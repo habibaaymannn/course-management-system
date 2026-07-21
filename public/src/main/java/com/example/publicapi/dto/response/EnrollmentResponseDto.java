@@ -1,6 +1,6 @@
 package com.example.publicapi.dto.response;
 
-import com.example.publicapi.entity.EnrollmentStatus;
+import com.example.core.enums.EnrollmentStatus;
 import lombok.*;
 
 import java.time.LocalDate;

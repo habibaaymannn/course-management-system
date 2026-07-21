@@ -2,14 +2,12 @@ package com.example.publicapi.serviceImpl;
 
 import com.example.publicapi.dto.request.StudentRequestDto;
 import com.example.publicapi.dto.response.StudentResponseDto;
-import com.example.publicapi.entity.Student;
-import com.example.publicapi.exception.FunctionalException;
+import com.example.core.entity.Student;
+import com.example.core.exception.FunctionalException;
 import com.example.publicapi.mapper.StudentMapper;
 import com.example.publicapi.repository.StudentRepository;
 import com.example.publicapi.service.StudentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

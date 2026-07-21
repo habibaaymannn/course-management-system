@@ -1,6 +1,6 @@
 package com.example.admin.repository;
 
-import com.example.admin.entity.Course;
+import com.example.core.entity.Course;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

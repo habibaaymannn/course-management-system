@@ -1,6 +1,6 @@
 package com.example.publicapi.repository;
 
-import com.example.publicapi.entity.Enrollment;
+import com.example.core.entity.Enrollment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
