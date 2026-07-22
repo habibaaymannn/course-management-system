@@ -12,9 +12,6 @@ import java.util.UUID;
 @Builder
 public class EnrollmentRequestDto {
 
-    @NotNull(message = "Student id is required")
-    private UUID studentId;
-
     @NotNull(message = "Course id is required")
     private UUID courseId;
 }
