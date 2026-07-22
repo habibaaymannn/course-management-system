@@ -10,10 +10,13 @@ import org.mapstruct.*;
 public interface InstructorMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "role", constant = "INSTRUCTOR")
     @Mapping(target = "courses", ignore = true)
     Instructor toEntity(InstructorRequestDto dto);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "role", ignore = true)
     @Mapping(target = "courses", ignore = true)
     void updateEntityFromDto(InstructorRequestDto dto, @MappingTarget Instructor instructor);
 

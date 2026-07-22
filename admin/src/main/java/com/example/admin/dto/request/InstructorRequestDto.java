@@ -21,5 +21,7 @@ public class InstructorRequestDto {
     @Email(message = "Email must be valid")
     private String email;
 
+    private String password;
+
     private String department;
 }
