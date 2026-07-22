@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,8 +38,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
     @Override
     public EnrollmentResponseDto enrollStudent(EnrollmentRequestDto dto) {
-        Student student = studentRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new FunctionalException("Student not found with id: " + dto.getStudentId(), HttpStatus.BAD_REQUEST));
+        Student student = getAuthenticatedStudent();
 
         Course course = courseRepository.findByIdAndDeletedFalse(dto.getCourseId())
                 .orElseThrow(() -> new FunctionalException("Course not found with id: " + dto.getCourseId(), HttpStatus.BAD_REQUEST));
@@ -59,19 +59,27 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<EnrollmentResponseDto> getEnrollmentsByStudent(UUID studentId, Pageable pageable) {
-        if (!studentRepository.existsById(studentId)) {
-            throw new FunctionalException("Student not found with id: " + studentId, HttpStatus.BAD_REQUEST);
-        }
-        return enrollmentRepository.findAllByStudentId(studentId, pageable).map(enrollmentMapper::toResponseDto);
+    public Page<EnrollmentResponseDto> getMyEnrollments(Pageable pageable) {
+        Student student = getAuthenticatedStudent();
+        return enrollmentRepository.findAllByStudentId(student.getId(), pageable).map(enrollmentMapper::toResponseDto);
     }
 
     @Override
-    public void cancelEnrollment(UUID id) {
+    public void cancelMyEnrollment(UUID id) {
+        Student student = getAuthenticatedStudent();
         Enrollment enrollment = enrollmentRepository.findById(id)
                 .orElseThrow(() -> new FunctionalException("Enrollment not found with id: " + id, HttpStatus.BAD_REQUEST));
+        if (!enrollment.getStudent().getId().equals(student.getId())) {
+            throw new FunctionalException("Enrollment does not belong to the authenticated student", HttpStatus.FORBIDDEN);
+        }
         enrollment.setStatus(EnrollmentStatus.CANCELLED);
         enrollmentRepository.save(enrollment);
+    }
+
+    private Student getAuthenticatedStudent() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return studentRepository.findByEmail(email)
+                .orElseThrow(() -> new FunctionalException("Authenticated student not found", HttpStatus.UNAUTHORIZED));
     }
 
     // Core new business rule for v2.0: enrollment is only allowed while

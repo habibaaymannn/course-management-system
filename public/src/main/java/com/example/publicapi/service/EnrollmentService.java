@@ -9,6 +9,6 @@ import java.util.UUID;
 
 public interface EnrollmentService {
     EnrollmentResponseDto enrollStudent(EnrollmentRequestDto dto);
-    Page<EnrollmentResponseDto> getEnrollmentsByStudent(UUID studentId, Pageable pageable);
-    void cancelEnrollment(UUID id);
+    Page<EnrollmentResponseDto> getMyEnrollments(Pageable pageable);
+    void cancelMyEnrollment(UUID id);
 }

@@ -28,16 +28,14 @@ public class EnrollmentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(enrollmentService.enrollStudent(dto));
     }
 
-    @GetMapping("/student/{studentId}")
-    public ResponseEntity<Page<EnrollmentResponseDto>> getByStudent(
-            @PathVariable UUID studentId,
-            @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(enrollmentService.getEnrollmentsByStudent(studentId, pageable));
+    @GetMapping("/me")
+    public ResponseEntity<Page<EnrollmentResponseDto>> getMine(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(enrollmentService.getMyEnrollments(pageable));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> cancel(@PathVariable UUID id) {
-        enrollmentService.cancelEnrollment(id);
+        enrollmentService.cancelMyEnrollment(id);
         return ResponseEntity.noContent().build();
     }
 }

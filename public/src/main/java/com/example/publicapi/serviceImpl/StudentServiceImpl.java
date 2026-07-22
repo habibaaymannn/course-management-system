@@ -9,10 +9,9 @@ import com.example.publicapi.repository.StudentRepository;
 import com.example.publicapi.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,23 +22,11 @@ public class StudentServiceImpl implements StudentService {
     private final StudentMapper studentMapper;
 
     @Override
-    public StudentResponseDto createStudent(StudentRequestDto dto) {
-        if (studentRepository.existsByEmail(dto.getEmail())) {
-            throw new FunctionalException("Student with email '" + dto.getEmail() + "' already exists", HttpStatus.BAD_REQUEST);
-        }
-        Student student = studentMapper.toEntity(dto);
-        return studentMapper.toResponseDto(studentRepository.save(student));
-    }
-
-    @Override
     @Transactional(readOnly = true)
-    public StudentResponseDto getStudentById(UUID id) {
-        return studentMapper.toResponseDto(findStudentOrThrow(id));
-    }
-
-
-    private Student findStudentOrThrow(UUID id) {
-        return studentRepository.findById(id)
-                .orElseThrow(() -> new FunctionalException("Student not found with id: " + id, HttpStatus.BAD_REQUEST));
+    public StudentResponseDto getCurrentStudent() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Student student = studentRepository.findByEmail(email)
+                .orElseThrow(() -> new FunctionalException("Authenticated student not found", HttpStatus.UNAUTHORIZED));
+        return studentMapper.toResponseDto(student);
     }
 }
