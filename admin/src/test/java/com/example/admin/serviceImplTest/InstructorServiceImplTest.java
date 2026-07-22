@@ -2,8 +2,8 @@ package com.example.admin.serviceImplTest;
 
 import com.example.admin.dto.request.InstructorRequestDto;
 import com.example.admin.dto.response.InstructorResponseDto;
-import com.example.admin.entity.Instructor;
-import com.example.admin.exception.FunctionalException;
+import com.example.core.entity.Instructor;
+import com.example.core.exception.FunctionalException;
 import com.example.admin.mapper.InstructorMapper;
 import com.example.admin.repository.InstructorRepository;
 import com.example.admin.serviceImpl.InstructorServiceImpl;
@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,7 @@ class InstructorServiceImplTest {
 
     @Mock private InstructorRepository instructorRepository;
     @Mock private InstructorMapper instructorMapper;
+    @Mock private PasswordEncoder passwordEncoder;
     @InjectMocks private InstructorServiceImpl instructorService;
 
     @Test
@@ -47,13 +49,31 @@ class InstructorServiceImplTest {
 
         when(instructorRepository.existsByEmail(dto.getEmail())).thenReturn(false);
         when(instructorMapper.toEntity(dto)).thenReturn(mappedInstructor);
+        when(passwordEncoder.encode(dto.getPassword())).thenReturn("encoded-password");
         when(instructorRepository.save(mappedInstructor)).thenReturn(savedInstructor);
         when(instructorMapper.toResponseDto(savedInstructor)).thenReturn(response);
 
         InstructorResponseDto result = instructorService.createInstructor(dto);
 
         assertThat(result).isSameAs(response);
+        assertThat(mappedInstructor.getPassword()).isEqualTo("encoded-password");
         verify(instructorRepository).save(mappedInstructor);
+    }
+
+    @Test
+    void createInstructorThrowsWhenPasswordIsTooShort() {
+        InstructorRequestDto dto = instructorRequest("ada@example.com");
+        dto.setPassword("short");
+
+        when(instructorRepository.existsByEmail(dto.getEmail())).thenReturn(false);
+
+        assertThatThrownBy(() -> instructorService.createInstructor(dto))
+                .isInstanceOf(FunctionalException.class)
+                .hasMessage("Password must be at least 8 characters")
+                .extracting("httpStatus")
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+
+        verify(instructorRepository, never()).save(any());
     }
 
     @Test
@@ -117,6 +137,7 @@ class InstructorServiceImplTest {
     void updateInstructorAllowsSameEmailIgnoringCase() {
         UUID instructorId = UUID.randomUUID();
         InstructorRequestDto dto = instructorRequest("ADA@example.com");
+        dto.setPassword(null);
         Instructor existingInstructor = Instructor.builder().id(instructorId).email("ada@example.com").build();
         Instructor savedInstructor = Instructor.builder().id(instructorId).email("ADA@example.com").build();
         InstructorResponseDto response = InstructorResponseDto.builder().id(instructorId).email("ADA@example.com").build();
@@ -136,6 +157,7 @@ class InstructorServiceImplTest {
     void updateInstructorThrowsWhenNewEmailAlreadyExists() {
         UUID instructorId = UUID.randomUUID();
         InstructorRequestDto dto = instructorRequest("grace@example.com");
+        dto.setPassword(null);
         Instructor existingInstructor = Instructor.builder().id(instructorId).email("ada@example.com").build();
 
         when(instructorRepository.findById(instructorId)).thenReturn(Optional.of(existingInstructor));
@@ -166,6 +188,7 @@ class InstructorServiceImplTest {
                 .firstName("Ada")
                 .lastName("Lovelace")
                 .email(email)
+                .password("password123")
                 .department("Computer Science")
                 .build();
     }
