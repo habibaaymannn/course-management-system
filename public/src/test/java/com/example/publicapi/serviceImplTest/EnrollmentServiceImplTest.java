@@ -1,17 +1,19 @@
 package com.example.publicapi.serviceImplTest;
 
+import com.example.core.entity.Course;
+import com.example.core.entity.Enrollment;
+import com.example.core.entity.Student;
+import com.example.core.enums.EnrollmentStatus;
+import com.example.core.exception.FunctionalException;
 import com.example.publicapi.dto.request.EnrollmentRequestDto;
 import com.example.publicapi.dto.response.EnrollmentResponseDto;
-import com.example.publicapi.entity.Course;
-import com.example.publicapi.entity.Enrollment;
-import com.example.publicapi.entity.EnrollmentStatus;
-import com.example.publicapi.entity.Student;
-import com.example.publicapi.exception.FunctionalException;
 import com.example.publicapi.mapper.EnrollmentMapper;
 import com.example.publicapi.repository.CourseRepository;
 import com.example.publicapi.repository.EnrollmentRepository;
 import com.example.publicapi.repository.StudentRepository;
 import com.example.publicapi.serviceImpl.EnrollmentServiceImpl;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -22,6 +24,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,14 +48,31 @@ class EnrollmentServiceImplTest {
     @Mock private EnrollmentMapper enrollmentMapper;
     @InjectMocks private EnrollmentServiceImpl enrollmentService;
 
+    private final UUID studentId = UUID.randomUUID();
+    private final Student authenticatedStudent = Student.builder()
+            .id(studentId)
+            .email("ada@example.com")
+            .firstName("Ada")
+            .lastName("Lovelace")
+            .build();
+
+    @BeforeEach
+    void setAuthentication() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("ada@example.com", null)
+        );
+    }
+
+    @AfterEach
+    void clearAuthentication() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
-    void enrollStudentSavesEnrollmentWhenStudentCourseAndRegistrationWindowAreValid() {
-        UUID studentId = UUID.randomUUID();
+    void enrollStudentUsesAuthenticatedStudent() {
         UUID courseId = UUID.randomUUID();
-        EnrollmentRequestDto dto = enrollmentRequest(studentId, courseId);
-        Student student = Student.builder().id(studentId).firstName("Ada").lastName("Lovelace").build();
         Course course = openCourse(courseId);
-        Enrollment savedEnrollment = Enrollment.builder().id(UUID.randomUUID()).student(student).course(course).build();
+        Enrollment savedEnrollment = Enrollment.builder().id(UUID.randomUUID()).student(authenticatedStudent).course(course).build();
         EnrollmentResponseDto response = EnrollmentResponseDto.builder()
                 .id(savedEnrollment.getId())
                 .studentId(studentId)
@@ -59,132 +80,67 @@ class EnrollmentServiceImplTest {
                 .status(EnrollmentStatus.ACTIVE)
                 .build();
 
-        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(studentRepository.findByEmail("ada@example.com")).thenReturn(Optional.of(authenticatedStudent));
         when(courseRepository.findByIdAndDeletedFalse(courseId)).thenReturn(Optional.of(course));
         when(enrollmentRepository.existsByStudentIdAndCourseId(studentId, courseId)).thenReturn(false);
         when(enrollmentRepository.save(any(Enrollment.class))).thenReturn(savedEnrollment);
         when(enrollmentMapper.toResponseDto(savedEnrollment)).thenReturn(response);
 
-        EnrollmentResponseDto result = enrollmentService.enrollStudent(dto);
+        EnrollmentResponseDto result = enrollmentService.enrollStudent(enrollmentRequest(courseId));
 
         assertThat(result).isSameAs(response);
         ArgumentCaptor<Enrollment> enrollmentCaptor = ArgumentCaptor.forClass(Enrollment.class);
         verify(enrollmentRepository).save(enrollmentCaptor.capture());
-        assertThat(enrollmentCaptor.getValue().getStudent()).isSameAs(student);
+        assertThat(enrollmentCaptor.getValue().getStudent()).isSameAs(authenticatedStudent);
         assertThat(enrollmentCaptor.getValue().getCourse()).isSameAs(course);
-        assertThat(enrollmentCaptor.getValue().getStatus()).isEqualTo(EnrollmentStatus.ACTIVE);
     }
 
     @Test
-    void enrollStudentThrowsWhenStudentDoesNotExist() {
-        UUID studentId = UUID.randomUUID();
+    void enrollStudentThrowsWhenAuthenticatedStudentDoesNotExist() {
         UUID courseId = UUID.randomUUID();
-        EnrollmentRequestDto dto = enrollmentRequest(studentId, courseId);
+        when(studentRepository.findByEmail("ada@example.com")).thenReturn(Optional.empty());
 
-        when(studentRepository.findById(studentId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> enrollmentService.enrollStudent(dto))
+        assertThatThrownBy(() -> enrollmentService.enrollStudent(enrollmentRequest(courseId)))
                 .isInstanceOf(FunctionalException.class)
-                .hasMessage("Student not found with id: " + studentId)
+                .hasMessage("Authenticated student not found")
                 .extracting("httpStatus")
-                .isEqualTo(HttpStatus.BAD_REQUEST);
+                .isEqualTo(HttpStatus.UNAUTHORIZED);
 
         verify(enrollmentRepository, never()).save(any());
     }
 
     @Test
     void enrollStudentThrowsWhenCourseDoesNotExist() {
-        UUID studentId = UUID.randomUUID();
         UUID courseId = UUID.randomUUID();
-        EnrollmentRequestDto dto = enrollmentRequest(studentId, courseId);
-        Student student = Student.builder().id(studentId).build();
-
-        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(studentRepository.findByEmail("ada@example.com")).thenReturn(Optional.of(authenticatedStudent));
         when(courseRepository.findByIdAndDeletedFalse(courseId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> enrollmentService.enrollStudent(dto))
+        assertThatThrownBy(() -> enrollmentService.enrollStudent(enrollmentRequest(courseId)))
                 .isInstanceOf(FunctionalException.class)
                 .hasMessage("Course not found with id: " + courseId)
                 .extracting("httpStatus")
                 .isEqualTo(HttpStatus.BAD_REQUEST);
-
-        verify(enrollmentRepository, never()).save(any());
     }
 
     @Test
-    void enrollStudentThrowsWhenStudentIsAlreadyEnrolled() {
-        UUID studentId = UUID.randomUUID();
+    void enrollStudentThrowsWhenAlreadyEnrolled() {
         UUID courseId = UUID.randomUUID();
-        EnrollmentRequestDto dto = enrollmentRequest(studentId, courseId);
-        Student student = Student.builder().id(studentId).build();
         Course course = openCourse(courseId);
 
-        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(studentRepository.findByEmail("ada@example.com")).thenReturn(Optional.of(authenticatedStudent));
         when(courseRepository.findByIdAndDeletedFalse(courseId)).thenReturn(Optional.of(course));
         when(enrollmentRepository.existsByStudentIdAndCourseId(studentId, courseId)).thenReturn(true);
 
-        assertThatThrownBy(() -> enrollmentService.enrollStudent(dto))
+        assertThatThrownBy(() -> enrollmentService.enrollStudent(enrollmentRequest(courseId)))
                 .isInstanceOf(FunctionalException.class)
                 .hasMessage("Student is already enrolled in this course")
                 .extracting("httpStatus")
                 .isEqualTo(HttpStatus.BAD_REQUEST);
-
-        verify(enrollmentRepository, never()).save(any());
     }
 
     @Test
-    void enrollStudentThrowsWhenRegistrationWindowIsNotConfigured() {
-        UUID studentId = UUID.randomUUID();
+    void enrollStudentThrowsWhenRegistrationWindowIsClosed() {
         UUID courseId = UUID.randomUUID();
-        EnrollmentRequestDto dto = enrollmentRequest(studentId, courseId);
-        Student student = Student.builder().id(studentId).build();
-        Course course = Course.builder().id(courseId).title("Java").build();
-
-        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
-        when(courseRepository.findByIdAndDeletedFalse(courseId)).thenReturn(Optional.of(course));
-        when(enrollmentRepository.existsByStudentIdAndCourseId(studentId, courseId)).thenReturn(false);
-
-        assertThatThrownBy(() -> enrollmentService.enrollStudent(dto))
-                .isInstanceOf(FunctionalException.class)
-                .hasMessage("Registration for course 'Java' has not been configured yet")
-                .extracting("httpStatus")
-                .isEqualTo(HttpStatus.BAD_REQUEST);
-
-        verify(enrollmentRepository, never()).save(any());
-    }
-
-    @Test
-    void enrollStudentThrowsWhenRegistrationHasNotOpened() {
-        UUID studentId = UUID.randomUUID();
-        UUID courseId = UUID.randomUUID();
-        EnrollmentRequestDto dto = enrollmentRequest(studentId, courseId);
-        Student student = Student.builder().id(studentId).build();
-        Course course = Course.builder()
-                .id(courseId)
-                .title("Java")
-                .registrationStartTime(LocalDateTime.now().plusDays(1))
-                .registrationEndTime(LocalDateTime.now().plusDays(2))
-                .build();
-
-        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
-        when(courseRepository.findByIdAndDeletedFalse(courseId)).thenReturn(Optional.of(course));
-        when(enrollmentRepository.existsByStudentIdAndCourseId(studentId, courseId)).thenReturn(false);
-
-        assertThatThrownBy(() -> enrollmentService.enrollStudent(dto))
-                .isInstanceOf(FunctionalException.class)
-                .hasMessageContaining("Registration for course 'Java' has not opened yet. It opens on")
-                .extracting("httpStatus")
-                .isEqualTo(HttpStatus.BAD_REQUEST);
-
-        verify(enrollmentRepository, never()).save(any());
-    }
-
-    @Test
-    void enrollStudentThrowsWhenRegistrationHasClosed() {
-        UUID studentId = UUID.randomUUID();
-        UUID courseId = UUID.randomUUID();
-        EnrollmentRequestDto dto = enrollmentRequest(studentId, courseId);
-        Student student = Student.builder().id(studentId).build();
         Course course = Course.builder()
                 .id(courseId)
                 .title("Java")
@@ -192,77 +148,70 @@ class EnrollmentServiceImplTest {
                 .registrationEndTime(LocalDateTime.now().minusDays(1))
                 .build();
 
-        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(studentRepository.findByEmail("ada@example.com")).thenReturn(Optional.of(authenticatedStudent));
         when(courseRepository.findByIdAndDeletedFalse(courseId)).thenReturn(Optional.of(course));
         when(enrollmentRepository.existsByStudentIdAndCourseId(studentId, courseId)).thenReturn(false);
 
-        assertThatThrownBy(() -> enrollmentService.enrollStudent(dto))
+        assertThatThrownBy(() -> enrollmentService.enrollStudent(enrollmentRequest(courseId)))
                 .isInstanceOf(FunctionalException.class)
                 .hasMessageContaining("Registration for course 'Java' has already closed. It closed on")
                 .extracting("httpStatus")
                 .isEqualTo(HttpStatus.BAD_REQUEST);
-
-        verify(enrollmentRepository, never()).save(any());
     }
 
     @Test
-    void getEnrollmentsByStudentReturnsMappedPageWhenStudentExists() {
-        UUID studentId = UUID.randomUUID();
+    void getMyEnrollmentsReturnsAuthenticatedStudentsEnrollments() {
         PageRequest pageable = PageRequest.of(0, 10);
-        Enrollment enrollment = Enrollment.builder().id(UUID.randomUUID()).build();
+        Enrollment enrollment = Enrollment.builder().id(UUID.randomUUID()).student(authenticatedStudent).build();
         EnrollmentResponseDto response = EnrollmentResponseDto.builder().id(enrollment.getId()).studentId(studentId).build();
 
-        when(studentRepository.existsById(studentId)).thenReturn(true);
+        when(studentRepository.findByEmail("ada@example.com")).thenReturn(Optional.of(authenticatedStudent));
         when(enrollmentRepository.findAllByStudentId(studentId, pageable))
                 .thenReturn(new PageImpl<>(List.of(enrollment), pageable, 1));
         when(enrollmentMapper.toResponseDto(enrollment)).thenReturn(response);
 
-        Page<EnrollmentResponseDto> result = enrollmentService.getEnrollmentsByStudent(studentId, pageable);
+        Page<EnrollmentResponseDto> result = enrollmentService.getMyEnrollments(pageable);
 
         assertThat(result.getContent()).containsExactly(response);
         assertThat(result.getTotalElements()).isEqualTo(1);
     }
 
     @Test
-    void getEnrollmentsByStudentThrowsWhenStudentDoesNotExist() {
-        UUID studentId = UUID.randomUUID();
-        PageRequest pageable = PageRequest.of(0, 10);
-        when(studentRepository.existsById(studentId)).thenReturn(false);
-
-        assertThatThrownBy(() -> enrollmentService.getEnrollmentsByStudent(studentId, pageable))
-                .isInstanceOf(FunctionalException.class)
-                .hasMessage("Student not found with id: " + studentId)
-                .extracting("httpStatus")
-                .isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    void cancelEnrollmentMarksEnrollmentCancelled() {
+    void cancelMyEnrollmentMarksOwnEnrollmentCancelled() {
         UUID enrollmentId = UUID.randomUUID();
-        Enrollment enrollment = Enrollment.builder().id(enrollmentId).status(EnrollmentStatus.ACTIVE).build();
+        Enrollment enrollment = Enrollment.builder()
+                .id(enrollmentId)
+                .student(authenticatedStudent)
+                .status(EnrollmentStatus.ACTIVE)
+                .build();
+
+        when(studentRepository.findByEmail("ada@example.com")).thenReturn(Optional.of(authenticatedStudent));
         when(enrollmentRepository.findById(enrollmentId)).thenReturn(Optional.of(enrollment));
 
-        enrollmentService.cancelEnrollment(enrollmentId);
+        enrollmentService.cancelMyEnrollment(enrollmentId);
 
         assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.CANCELLED);
         verify(enrollmentRepository).save(enrollment);
     }
 
     @Test
-    void cancelEnrollmentThrowsWhenEnrollmentDoesNotExist() {
+    void cancelMyEnrollmentRejectsAnotherStudentsEnrollment() {
         UUID enrollmentId = UUID.randomUUID();
-        when(enrollmentRepository.findById(enrollmentId)).thenReturn(Optional.empty());
+        Student otherStudent = Student.builder().id(UUID.randomUUID()).build();
+        Enrollment enrollment = Enrollment.builder().id(enrollmentId).student(otherStudent).build();
 
-        assertThatThrownBy(() -> enrollmentService.cancelEnrollment(enrollmentId))
+        when(studentRepository.findByEmail("ada@example.com")).thenReturn(Optional.of(authenticatedStudent));
+        when(enrollmentRepository.findById(enrollmentId)).thenReturn(Optional.of(enrollment));
+
+        assertThatThrownBy(() -> enrollmentService.cancelMyEnrollment(enrollmentId))
                 .isInstanceOf(FunctionalException.class)
-                .hasMessage("Enrollment not found with id: " + enrollmentId)
+                .hasMessage("Enrollment does not belong to the authenticated student")
                 .extracting("httpStatus")
-                .isEqualTo(HttpStatus.BAD_REQUEST);
+                .isEqualTo(HttpStatus.FORBIDDEN);
     }
 
-    private EnrollmentRequestDto enrollmentRequest(UUID studentId, UUID courseId) {
+    private EnrollmentRequestDto enrollmentRequest(UUID courseId) {
         return EnrollmentRequestDto.builder()
-                .studentId(studentId)
                 .courseId(courseId)
                 .build();
     }

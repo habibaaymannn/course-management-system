@@ -1,8 +1,8 @@
 package com.example.publicapi.serviceImplTest;
 
 import com.example.publicapi.dto.response.CourseResponseDto;
-import com.example.publicapi.entity.Course;
-import com.example.publicapi.exception.FunctionalException;
+import com.example.core.entity.Course;
+import com.example.core.exception.FunctionalException;
 import com.example.publicapi.mapper.CourseMapper;
 import com.example.publicapi.repository.CourseRepository;
 import com.example.publicapi.serviceImpl.CourseServiceImpl;
